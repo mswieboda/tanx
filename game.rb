@@ -9,6 +9,10 @@ class Tanx < Gosu::Window
 
     @player = Player.new(self)
     @player.jump_to(width / 2, height - height / 10)
+
+    @enemy = Player.new(self)
+    @enemy.jump_to(width / 2, height / 10)
+    @enemy.face_right
   end
 
   def update
@@ -24,12 +28,23 @@ class Tanx < Gosu::Window
       end
     end
 
-    @player.move
+    @player.check_for_damage(@enemy.projectiles)
+    @enemy.check_for_damage(@player.projectiles)
+
+    @player.update
+    @enemy.update
   end
 
   def draw
+    # Tile background image across screen
+    ((self.width / @background_image.width) + 1).times do |x|
+      ((self.height / @background_image.height) + 1).times do |y|
+        @background_image.draw(x * @background_image.width, y * @background_image.height, 0)
+      end
+    end
+
+    @enemy.draw
     @player.draw
-    @background_image.draw(0, 0, 0, 5, 5)
   end
 
   def button_down(id)

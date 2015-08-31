@@ -14,6 +14,12 @@ class Player
     @x = @y = @vel_x = @vel_y = @angle = 0.0
     @projectiles = []
     @movement_style = MOVEMENT_STYLE_DIRECTIONAL
+    @mark_for_deletion = false
+    @removed = false
+    @armour = 100
+    @health = Gosu::Font.new(11)
+
+    @explosion_animation = Gosu::Image::load_tiles("media/explosion.png", 128, 128)
   end
 
   def jump_to(x, y)
@@ -59,7 +65,7 @@ class Player
     @vel_y -= Gosu::offset_y(@angle, ACCELERATION / 2)
   end
 
-  def move
+  def update
     @x += @vel_x
     @y += @vel_y
     @x %= @window.width
@@ -69,18 +75,47 @@ class Player
     @vel_x *= 0.75
     @vel_y *= 0.75
 
-    @projectiles.each(&:move)
+    @projectiles.each(&:update)
     @projectiles.reject!(&:deleted?)
   end
 
   def shoot
-    return if @projectiles.size > 0
+    return if @projectiles.size > 2
 
     @projectiles << Projectile.new(@window, @x, @y, @angle)
   end
 
+  def check_for_damage(projectiles)
+    return if deleted?
+
+    projectiles.each do |projectile|
+      if projectile.collide?(@x, @y, 10)
+        projectile.mark_for_deletion = true
+        @armour -= 10
+      end
+    end
+
+    @mark_for_deletion = @armour <= 0
+  end
+
+  def deleted?
+    !!@mark_for_deletion
+  end
+
   def draw
+    if deleted?
+      # TODO: this needs a lot of work
+      # Needs to start at index 0,
+      # and only run once, then never show again
+      index = Gosu::milliseconds / 100 % @explosion_animation.size
+      img = @explosion_animation[index]
+      img.draw(@x - img.width / 2.0, @y - img.height / 2.0, 4)
+
+      return
+    end
+
     @image.draw_rot(@x, @y, 3, @angle)
+    @health.draw(@armour.to_s, @x, @y, 4)
     @projectiles.each(&:draw)
   end
 end

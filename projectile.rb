@@ -1,6 +1,8 @@
 class Projectile
   ACCELERATION = 10
 
+  attr_accessor :mark_for_deletion
+
   def initialize(window, x, y, angle)
     @window = window
     @image = Gosu::Image.new("media/projectile.png")
@@ -35,7 +37,7 @@ class Projectile
     @vel_y += Gosu::offset_y(@angle, ACCELERATION)
   end
 
-  def move
+  def update
     @x += @vel_x
     @y += @vel_y
 
@@ -46,6 +48,10 @@ class Projectile
 
   def deleted?
     !!@mark_for_deletion
+  end
+
+  def collide?(x, y, size)
+    Gosu::distance(@x, @y, x, y) < size
   end
 
   def draw
